@@ -83,9 +83,9 @@ export const AdminPayroll: React.FC = () => {
     const sp = salaryProfiles.find((s) => s.employeeId === emp.employeeId) || {
       id: `sp-${emp.employeeId}`,
       employeeId: emp.employeeId,
-      monthlyWage: 9000,
-      yearlyWage: 108000,
-      currency: 'USD',
+      monthlyWage: 85000,
+      yearlyWage: 1020000,
+      currency: 'INR',
       effectiveFrom: emp.dateOfJoining,
       workingDaysPerWeek: 5,
       breakHours: 1,
@@ -131,7 +131,7 @@ export const AdminPayroll: React.FC = () => {
         workingDays: 22,
         paidDays: 22,
         unpaidDays: 0,
-        currency: salaryProfile.currency || 'USD',
+        currency: salaryProfile.currency || 'INR',
         basicSalary: calc.basicSalary,
         monthlyWage: salaryProfile.monthlyWage,
         grossSalary: calc.grossSalary,
@@ -154,9 +154,7 @@ export const AdminPayroll: React.FC = () => {
         action: 'PAYROLL_GENERATED',
         entityType: 'PayrollRun',
         entityId: selectedMonth,
-        newValue: `Generated ${newPayslips.length} payslips for ${selectedMonth}. Total Net Payout: $${totalNet.toFixed(
-          2
-        )}`,
+        newValue: `Generated ${newPayslips.length} payslips for ${selectedMonth}. Total Net Payout: ${formatCurrency(totalNet, 'INR')}`,
       });
 
       // Notify all employees
@@ -483,7 +481,7 @@ export const AdminPayroll: React.FC = () => {
                       <span className="font-bold text-indigo-600">
                         {comp.calculationMethod === 'PERCENTAGE'
                           ? `${comp.value}% of ${comp.percentageBase.replace('_', ' ')}`
-                          : `$${comp.value}`}
+                          : `₹${comp.value.toLocaleString('en-IN')}`}
                       </span>
                     </div>
                   </div>
@@ -572,7 +570,7 @@ export const AdminPayroll: React.FC = () => {
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-hidden focus:border-indigo-500"
                   >
                     <option value="PERCENTAGE">Percentage (%)</option>
-                    <option value="FIXED_AMOUNT">Fixed Amount ($)</option>
+                    <option value="FIXED_AMOUNT">Fixed Amount (₹)</option>
                   </select>
                 </div>
               </div>

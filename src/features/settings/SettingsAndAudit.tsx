@@ -5,6 +5,7 @@ import { ConfirmationModal } from '../../components/common/ConfirmationModal';
 import { dayflowDb } from '../../services/db';
 import { SystemSettings, AuditLog } from '../../types';
 import { formatDate } from '../../lib/utils';
+import { DepartmentManager } from '../departments/DepartmentManager';
 import {
   Settings,
   ShieldAlert,
@@ -14,7 +15,7 @@ import {
   Filter,
   CheckCircle2,
   Lock,
-  Building,
+  Building2,
   Clock,
   DollarSign,
   AlertTriangle,
@@ -25,7 +26,7 @@ export const SettingsAndAudit: React.FC = () => {
   const { currentUser, currentEmployee, role } = useAuth();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'audit' | 'database'>('general');
+  const [activeTab, setActiveTab] = useState<'departments' | 'general' | 'audit' | 'database'>('departments');
   const [settings, setSettings] = useState<SystemSettings>({
     companyName: 'Dayflow Technologies Inc.',
     companyPrefix: 'DAYFLOW',
@@ -34,7 +35,7 @@ export const SettingsAndAudit: React.FC = () => {
     standardShiftHours: 8,
     standardStartTime: '09:00',
     standardEndTime: '17:30',
-    defaultCurrency: 'USD',
+    defaultCurrency: 'INR',
     enableBiometricSync: false,
     requireLeaveReason: true,
   });
@@ -116,8 +117,23 @@ export const SettingsAndAudit: React.FC = () => {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex items-center bg-white border border-slate-200 rounded-2xl p-1 shadow-2xs">
+        <div className="flex flex-wrap items-center bg-white border border-slate-200 rounded-2xl p-1 shadow-2xs gap-1">
           <button
+            id="tab_departments_btn"
+            type="button"
+            onClick={() => setActiveTab('departments')}
+            className={cn(
+              'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5',
+              activeTab === 'departments'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-50'
+            )}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Departments</span>
+          </button>
+          <button
+            id="tab_general_btn"
             type="button"
             onClick={() => setActiveTab('general')}
             className={cn(
@@ -130,6 +146,7 @@ export const SettingsAndAudit: React.FC = () => {
             HR Policies
           </button>
           <button
+            id="tab_audit_btn"
             type="button"
             onClick={() => setActiveTab('audit')}
             className={cn(
@@ -142,6 +159,7 @@ export const SettingsAndAudit: React.FC = () => {
             Audit Trail
           </button>
           <button
+            id="tab_database_btn"
             type="button"
             onClick={() => setActiveTab('database')}
             className={cn(
@@ -155,6 +173,9 @@ export const SettingsAndAudit: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* 0. DEPARTMENTS MANAGEMENT */}
+      {activeTab === 'departments' && <DepartmentManager />}
 
       {/* 1. GENERAL HR POLICIES */}
       {activeTab === 'general' && (
@@ -233,16 +254,16 @@ export const SettingsAndAudit: React.FC = () => {
             <div>
               <label className="block font-bold text-slate-700 mb-1">Base Currency</label>
               <select
-                value={settings.defaultCurrency}
+                value={settings.defaultCurrency || 'INR'}
                 onChange={(e) => setSettings({ ...settings, defaultCurrency: e.target.value })}
                 className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-hidden focus:border-indigo-500"
               >
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="CAD">CAD (C$)</option>
-                <option value="AUD">AUD (A$)</option>
-                <option value="INR">INR (₹)</option>
+                <option value="INR">INR (₹) - Indian Rupee</option>
+                <option value="USD">USD ($) - US Dollar</option>
+                <option value="EUR">EUR (€) - Euro</option>
+                <option value="GBP">GBP (£) - British Pound</option>
+                <option value="CAD">CAD (C$) - Canadian Dollar</option>
+                <option value="AUD">AUD (A$) - Australian Dollar</option>
               </select>
             </div>
 

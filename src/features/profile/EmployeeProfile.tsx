@@ -34,10 +34,13 @@ import {
   Key,
   UserMinus,
   UserCheck,
+  Eye,
+  EyeOff,
+  Copy,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { RequestRemovalModal } from '../employees/RequestRemovalModal';
-import { AssignRoleModal } from '../employees/AssignRoleModal';
+import { AdminUserCredentialModal } from '../employees/AdminUserCredentialModal';
 
 export const EmployeeProfile: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
@@ -60,6 +63,7 @@ export const EmployeeProfile: React.FC = () => {
   // Offboarding & Role modals
   const [isRemovalModalOpen, setIsRemovalModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [showPasswordAdmin, setShowPasswordAdmin] = useState(false);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -633,7 +637,7 @@ export const EmployeeProfile: React.FC = () => {
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-slate-500">Base Currency:</span>
                 <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 font-mono font-bold text-xs">
-                  {salaryProfile?.currency || 'USD'}
+                  {salaryProfile?.currency === 'USD' ? 'INR' : (salaryProfile?.currency || 'INR')}
                 </span>
               </div>
             </div>
@@ -741,41 +745,123 @@ export const EmployeeProfile: React.FC = () => {
       {/* 4. SECURITY & ACCOUNT TAB */}
       {activeTab === 'security' && (
         <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-          <h3 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
-            Account Security & Access Authority
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
-            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 flex flex-col justify-between">
-              <div>
-                <p className="font-bold text-slate-900 text-sm mb-1">Password & Authentication</p>
-                <p className="text-slate-500 mb-4">
-                  Trigger a secure password reset link to the employee's registered email address.
-                </p>
-              </div>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 className="text-base font-bold text-slate-900">
+              Account Security & Master Access Authority
+            </h3>
+            {isAdmin && employee.employmentStatus !== 'TERMINATED' && (
               <button
                 type="button"
-                onClick={handleSendPasswordReset}
-                className="w-fit px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-colors"
+                onClick={() => setIsRoleModalOpen(true)}
+                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
               >
                 <Key className="w-3.5 h-3.5" />
-                <span>Send Password Reset Email</span>
+                <span>Manage Login ID & Password</span>
               </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs">
+            {/* Login ID Card */}
+            <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between">
+              <div>
+                <p className="font-bold text-slate-900 text-xs mb-1 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Login ID</span>
+                </p>
+                <p className="text-[11px] text-slate-500 mb-3">
+                  Unique enterprise credential used for workstation authentication.
+                </p>
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 font-mono font-bold text-indigo-900 text-xs break-all">
+                  {employee.loginId || employee.employeeId}
+                </div>
+              </div>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setIsRoleModalOpen(true)}
+                  className="mt-3 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 text-left"
+                >
+                  Edit Login ID →
+                </button>
+              )}
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 flex flex-col justify-between">
+            {/* Password Card */}
+            <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between">
               <div>
-                <p className="font-bold text-slate-900 text-sm mb-1">Role-Based Access Level</p>
-                <p className="text-slate-500 mb-3">
-                  Assigned system authority determines feature permissions and authorization boundaries.
+                <p className="font-bold text-slate-900 text-xs mb-1 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Password Credentials</span>
                 </p>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 font-bold mb-3">
-                  <Shield className="w-4 h-4" />
+                <p className="text-[11px] text-slate-500 mb-3">
+                  {isAdmin ? 'Admins can view, copy, and change passwords.' : 'Trigger password recovery to registered email.'}
+                </p>
+                {isAdmin ? (
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 font-mono font-bold text-slate-800 text-xs flex items-center justify-between gap-2">
+                    <span className="truncate">
+                      {showPasswordAdmin ? (employee.password || 'password @2026') : '••••••••••••'}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordAdmin(!showPasswordAdmin)}
+                        className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
+                        title={showPasswordAdmin ? 'Hide password' : 'Show password'}
+                      >
+                        {showPasswordAdmin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(employee.password || 'password @2026');
+                          showToast('Password copied to clipboard', 'success');
+                        }}
+                        className="p-1 text-indigo-600 hover:text-indigo-800 rounded transition-colors"
+                        title="Copy password"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSendPasswordReset}
+                    className="w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                    <span>Send Reset Email</span>
+                  </button>
+                )}
+              </div>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setIsRoleModalOpen(true)}
+                  className="mt-3 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 text-left"
+                >
+                  Change / Edit Password →
+                </button>
+              )}
+            </div>
+
+            {/* Role Authority Card */}
+            <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between">
+              <div>
+                <p className="font-bold text-slate-900 text-xs mb-1 flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Assigned System Authority</span>
+                </p>
+                <p className="text-[11px] text-slate-500 mb-3">
+                  Role governing approvals, offboarding permissions, and records access.
+                </p>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-100/70 border border-purple-200 text-purple-800 font-bold text-xs">
+                  <Shield className="w-3.5 h-3.5" />
                   <span>
-                    Authority:{' '}
                     {employee.department.includes('Human')
                       ? 'HR OFFICER'
-                      : employee.department.includes('Executive')
+                      : employee.designation.toLowerCase().includes('admin') || employee.employeeId === 'DAYFLOW-AM2023-001'
                       ? 'ADMINISTRATOR'
                       : 'EMPLOYEE'}
                   </span>
@@ -786,10 +872,9 @@ export const EmployeeProfile: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsRoleModalOpen(true)}
-                  className="w-fit px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center gap-1.5 transition-colors"
+                  className="mt-3 text-[11px] font-bold text-purple-700 hover:text-purple-900 text-left"
                 >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  <span>Assign System Role & HR</span>
+                  Change Role (HR / Employee) →
                 </button>
               )}
             </div>
@@ -807,8 +892,8 @@ export const EmployeeProfile: React.FC = () => {
         }}
       />
 
-      {/* Assign Role Modal */}
-      <AssignRoleModal
+      {/* Admin User Role & Credential Modal */}
+      <AdminUserCredentialModal
         isOpen={isRoleModalOpen}
         onClose={() => setIsRoleModalOpen(false)}
         employee={employee}

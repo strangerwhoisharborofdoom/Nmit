@@ -4,16 +4,17 @@ import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CreateEmployeeModal } from './CreateEmployeeModal';
 import { RequestRemovalModal } from './RequestRemovalModal';
-import { AssignRoleModal } from './AssignRoleModal';
+import { AdminUserCredentialModal } from './AdminUserCredentialModal';
 import { OffboardingApprovalsModal } from './OffboardingApprovalsModal';
 import { dayflowDb } from '../../services/db';
-import { Employee, EmployeeRemovalRequest } from '../../types';
+import { Employee, EmployeeRemovalRequest, Department } from '../../types';
 import {
   Users,
   Search,
   Filter,
   UserPlus,
   Building,
+  Building2,
   Mail,
   Phone,
   MapPin,
@@ -26,6 +27,7 @@ import {
   Clock,
   UserCheck,
   MoreVertical,
+  Key,
 } from 'lucide-react';
 import { cn, formatDate } from '../../lib/utils';
 
@@ -37,6 +39,7 @@ export const EmployeeList: React.FC = () => {
   const isAdminOrHR = role === 'ADMIN' || role === 'HR';
 
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [dbDepartments, setDbDepartments] = useState<Department[]>([]);
   const [removalRequests, setRemovalRequests] = useState<EmployeeRemovalRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState('ALL');
@@ -52,12 +55,14 @@ export const EmployeeList: React.FC = () => {
 
   const fetchEmployees = async () => {
     setIsLoading(true);
-    const [empData, reqData] = await Promise.all([
+    const [empData, reqData, deptData] = await Promise.all([
       dayflowDb.getEmployees(),
       dayflowDb.getRemovalRequests(),
+      dayflowDb.getDepartments(),
     ]);
     setEmployees(empData);
     setRemovalRequests(reqData);
+    setDbDepartments(deptData);
     setIsLoading(false);
   };
 
@@ -66,7 +71,12 @@ export const EmployeeList: React.FC = () => {
   }, []);
 
   const pendingRemovalCount = removalRequests.filter((r) => r.status === 'PENDING').length;
-  const departments = ['ALL', ...Array.from(new Set(employees.map((e) => e.department)))];
+  
+  // Combine all active departments from DB plus any employee assigned departments
+  const departmentNamesSet = new Set<string>();
+  dbDepartments.forEach((d) => departmentNamesSet.add(d.name));
+  employees.forEach((e) => departmentNamesSet.add(e.department));
+  const departments = ['ALL', ...Array.from(departmentNamesSet)];
 
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
@@ -99,6 +109,17 @@ export const EmployeeList: React.FC = () => {
 
         {isAdminOrHR && (
           <div className="flex flex-wrap items-center gap-3">
+            {/* Manage Departments Button */}
+            <button
+              id="manage_departments_nav_btn"
+              type="button"
+              onClick={() => navigate('/admin/settings')}
+              className="px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-2"
+            >
+              <Building2 className="w-4 h-4 text-indigo-600" />
+              <span>Departments</span>
+            </button>
+
             {/* Offboarding Approvals Button with Badge */}
             <button
               type="button"
@@ -278,9 +299,10 @@ export const EmployeeList: React.FC = () => {
                             setSelectedEmployeeForRole(emp);
                           }}
                           className="flex-1 px-2.5 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-700 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-1"
+                          title="View and Change Login ID, Password, and Role"
                         >
-                          <Shield className="w-3 h-3 text-indigo-600" />
-                          <span>Assign Role</span>
+                          <Key className="w-3 h-3 text-indigo-600" />
+                          <span>Credentials</span>
                         </button>
                       )}
 
@@ -368,10 +390,10 @@ export const EmployeeList: React.FC = () => {
                               type="button"
                               onClick={() => setSelectedEmployeeForRole(emp)}
                               className="px-2.5 py-1 text-slate-700 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
-                              title="Assign Role & HR Access"
+                              title="View & Edit Login ID, Password, and Role"
                             >
-                              <Shield className="w-3 h-3 text-indigo-600" />
-                              <span>Role</span>
+                              <Key className="w-3 h-3 text-indigo-600" />
+                              <span>Credentials</span>
                             </button>
                           )}
 
@@ -424,8 +446,8 @@ export const EmployeeList: React.FC = () => {
         }}
       />
 
-      {/* Assign Role Modal (Admin) */}
-      <AssignRoleModal
+      {/* Admin User Role & Credential Modal (Admin) */}
+      <AdminUserCredentialModal
         isOpen={!!selectedEmployeeForRole}
         onClose={() => setSelectedEmployeeForRole(null)}
         employee={selectedEmployeeForRole}

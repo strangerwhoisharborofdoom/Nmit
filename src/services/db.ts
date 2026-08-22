@@ -28,11 +28,13 @@ import {
   SystemSettings,
   EmployeeRemovalRequest,
   UserRole,
+  Department,
 } from '../types';
 import {
   INITIAL_SETTINGS,
   INITIAL_LEAVE_TYPES,
   INITIAL_SALARY_COMPONENTS,
+  INITIAL_DEPARTMENTS,
   DEMO_USERS,
   DEMO_EMPLOYEES,
   DEMO_SALARY_PROFILES,
@@ -98,6 +100,7 @@ export class DayflowDbService {
   private seedLocalFallback() {
     if (!localStorage.getItem(STORAGE_PREFIX + 'employees')) {
       setLocalStore('settings', INITIAL_SETTINGS);
+      setLocalStore('departments', INITIAL_DEPARTMENTS);
       setLocalStore('leaveTypes', INITIAL_LEAVE_TYPES);
       setLocalStore('salaryComponents', INITIAL_SALARY_COMPONENTS);
       setLocalStore('users', DEMO_USERS);
@@ -110,6 +113,8 @@ export class DayflowDbService {
       setLocalStore('notifications', DEMO_NOTIFICATIONS);
       setLocalStore('auditLogs', DEMO_AUDIT_LOGS);
       setLocalStore('removalRequests', DEMO_REMOVAL_REQUESTS);
+    } else if (!localStorage.getItem(STORAGE_PREFIX + 'departments')) {
+      setLocalStore('departments', INITIAL_DEPARTMENTS);
     }
   }
 
@@ -118,6 +123,11 @@ export class DayflowDbService {
     try {
       // Seed System Settings
       await setDoc(doc(db, 'settings', 'global'), INITIAL_SETTINGS);
+
+      // Seed Departments
+      for (const d of INITIAL_DEPARTMENTS) {
+        await setDoc(doc(db, 'departments', d.id), d);
+      }
 
       // Seed Leave Types
       for (const lt of INITIAL_LEAVE_TYPES) {
@@ -185,6 +195,7 @@ export class DayflowDbService {
 
   async resetToSeedData(): Promise<void> {
     localStorage.removeItem(STORAGE_PREFIX + 'settings');
+    localStorage.removeItem(STORAGE_PREFIX + 'departments');
     localStorage.removeItem(STORAGE_PREFIX + 'leaveTypes');
     localStorage.removeItem(STORAGE_PREFIX + 'salaryComponents');
     localStorage.removeItem(STORAGE_PREFIX + 'users');
@@ -199,6 +210,222 @@ export class DayflowDbService {
     localStorage.removeItem(STORAGE_PREFIX + 'payslips');
     localStorage.removeItem(STORAGE_PREFIX + 'removalRequests');
     await this.seedAllData();
+  }
+
+  // --- DEPARTMENTS ---
+  async getDepartments(): Promise<Department[]> {
+    try {
+      const snap = await getDocs(collection(db, 'departments'));
+      if (!snap.empty) {
+        const list = snap.docs.map((d) => d.data() as Department);
+        setLocalStore('departments', list);
+        return list;
+      }
+    } catch (err) {
+      console.warn('Firestore getDepartments err:', err);
+    }
+    return getLocalStore<Department[]>('departments', INITIAL_DEPARTMENTS);
+  }
+
+  async getDepartment(id: string): Promise<Department | null> {
+    const list = await this.getDepartments();
+    return list.find((d) => d.id === id || d.name.toLowerCase() === id.toLowerCase()) || null;
+  }
+
+  async addDepartment(
+    deptData: {
+      name: string;
+      code?: string;
+      description?: string;
+      headOfDepartment?: string;
+      location?: string;
+      budget?: number;
+    },
+    actorInfo?: { actorUserId?: string; actorName?: string; actorRole?: string }
+  ): Promise<{ success: boolean; department?: Department; message?: string }> {
+    const cleanName = deptData.name.trim();
+    if (!cleanName) {
+      return { success: false, message: 'Department name cannot be empty.' };
+    }
+
+    const existingList = await this.getDepartments();
+    const duplicate = existingList.find(
+      (d) => d.name.toLowerCase() === cleanName.toLowerCase()
+    );
+    if (duplicate) {
+      return { success: false, message: `Department "${cleanName}" already exists.` };
+    }
+
+    const code =
+      deptData.code?.trim().toUpperCase() ||
+      cleanName
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .slice(0, 4)
+        .toUpperCase() ||
+      'DEPT';
+
+    const id = `dept-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newDept: Department = {
+      id,
+      name: cleanName,
+      code,
+      description: deptData.description?.trim() || '',
+      headOfDepartment: deptData.headOfDepartment?.trim() || '',
+      location: deptData.location?.trim() || 'San Francisco HQ',
+      budget: deptData.budget || 0,
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await setDoc(doc(db, 'departments', id), newDept);
+    } catch (err) {
+      console.warn('Firestore addDepartment err:', err);
+    }
+
+    const updatedList = [...existingList, newDept];
+    setLocalStore('departments', updatedList);
+
+    // Log in audit trail
+    await this.logAudit({
+      actorUserId: actorInfo?.actorUserId || 'admin',
+      actorName: actorInfo?.actorName || 'Admin Officer',
+      actorRole: (actorInfo?.actorRole as any) || 'ADMIN',
+      action: 'DEPARTMENT_CREATED',
+      entityType: 'Department',
+      entityId: id,
+      newValue: `Created department: "${newDept.name}" [${newDept.code}]`,
+    });
+
+    return {
+      success: true,
+      department: newDept,
+      message: `Department "${newDept.name}" created successfully.`,
+    };
+  }
+
+  async updateDepartment(
+    id: string,
+    updates: Partial<Department>,
+    actorInfo?: { actorUserId?: string; actorName?: string; actorRole?: string }
+  ): Promise<{ success: boolean; department?: Department; message?: string }> {
+    const list = await this.getDepartments();
+    const index = list.findIndex((d) => d.id === id);
+    if (index === -1) {
+      return { success: false, message: 'Department not found.' };
+    }
+
+    const prevDept = list[index];
+    const prevName = prevDept.name;
+    const newName = updates.name ? updates.name.trim() : prevName;
+
+    const updatedDept: Department = {
+      ...prevDept,
+      ...updates,
+      name: newName,
+      code: updates.code ? updates.code.trim().toUpperCase() : prevDept.code,
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await setDoc(doc(db, 'departments', id), updatedDept);
+    } catch (err) {
+      console.warn('Firestore updateDepartment err:', err);
+    }
+
+    list[index] = updatedDept;
+    setLocalStore('departments', list);
+
+    // If department name was renamed, optionally sync employees with the old department name
+    if (prevName !== newName) {
+      const allEmployees = await this.getEmployees();
+      const affected = allEmployees.filter((e) => e.department === prevName);
+      for (const emp of affected) {
+        await this.saveEmployee({ ...emp, department: newName });
+      }
+    }
+
+    await this.logAudit({
+      actorUserId: actorInfo?.actorUserId || 'admin',
+      actorName: actorInfo?.actorName || 'Admin Officer',
+      actorRole: (actorInfo?.actorRole as any) || 'ADMIN',
+      action: 'DEPARTMENT_UPDATED',
+      entityType: 'Department',
+      entityId: id,
+      previousValue: `Name: ${prevDept.name} | Code: ${prevDept.code}`,
+      newValue: `Name: ${updatedDept.name} | Code: ${updatedDept.code}`,
+    });
+
+    return {
+      success: true,
+      department: updatedDept,
+      message: `Department "${updatedDept.name}" updated successfully.`,
+    };
+  }
+
+  async deleteDepartment(
+    id: string,
+    reassignToDeptName?: string,
+    actorInfo?: { actorUserId?: string; actorName?: string; actorRole?: string }
+  ): Promise<{ success: boolean; message?: string; affectedEmployeesCount?: number }> {
+    const list = await this.getDepartments();
+    const deptToDelete = list.find((d) => d.id === id || d.name === id);
+    if (!deptToDelete) {
+      return { success: false, message: 'Department not found.' };
+    }
+
+    // Check if there are employees assigned to this department
+    const allEmployees = await this.getEmployees();
+    const affectedEmployees = allEmployees.filter(
+      (e) => e.department.toLowerCase() === deptToDelete.name.toLowerCase()
+    );
+
+    const reassignTarget = reassignToDeptName || 'General';
+
+    // Reassign affected employees to the target department
+    for (const emp of affectedEmployees) {
+      await this.saveEmployee({
+        ...emp,
+        department: reassignTarget,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    try {
+      await deleteDoc(doc(db, 'departments', deptToDelete.id));
+    } catch (err) {
+      console.warn('Firestore deleteDepartment err:', err);
+    }
+
+    const remaining = list.filter((d) => d.id !== deptToDelete.id);
+    setLocalStore('departments', remaining);
+
+    await this.logAudit({
+      actorUserId: actorInfo?.actorUserId || 'admin',
+      actorName: actorInfo?.actorName || 'Admin Officer',
+      actorRole: (actorInfo?.actorRole as any) || 'ADMIN',
+      action: 'DEPARTMENT_DELETED',
+      entityType: 'Department',
+      entityId: deptToDelete.id,
+      previousValue: `Deleted Department "${deptToDelete.name}" (${deptToDelete.code})`,
+      newValue:
+        affectedEmployees.length > 0
+          ? `Reassigned ${affectedEmployees.length} employee(s) to "${reassignTarget}"`
+          : 'No assigned employees required reassignment.',
+    });
+
+    return {
+      success: true,
+      affectedEmployeesCount: affectedEmployees.length,
+      message: `Department "${deptToDelete.name}" deleted successfully.${
+        affectedEmployees.length > 0
+          ? ` ${affectedEmployees.length} employee(s) reassigned to "${reassignTarget}".`
+          : ''
+      }`,
+    };
   }
 
   // --- SYSTEM SETTINGS ---
@@ -555,7 +782,7 @@ export class DayflowDbService {
         action: 'SALARY_PROFILE_UPDATED',
         entityType: 'SalaryProfile',
         entityId: profile.employeeId,
-        newValue: `Updated Monthly Wage to $${profile.monthlyWage} (Yearly: $${profile.yearlyWage})`,
+        newValue: `Updated Monthly Wage to ₹${profile.monthlyWage.toLocaleString('en-IN')} (Yearly: ₹${profile.yearlyWage.toLocaleString('en-IN')})`,
       });
     }
   }
@@ -929,6 +1156,153 @@ export class DayflowDbService {
     return {
       success: true,
       message: `Successfully assigned ${emp.fullName} to ${newRole} (${updatedEmp.department})`,
+    };
+  }
+
+  // --- CREDENTIALS & LOGIN ID MANAGEMENT ---
+  generateStandardLoginId(
+    companyName: string = 'Dayflow Technologies',
+    firstName: string = 'User',
+    lastName: string = 'Member',
+    yearOfJoining: number = new Date().getFullYear(),
+    seqNumber?: number
+  ): string {
+    const cleanCompany = (companyName.replace(/[^a-zA-Z]/g, '').slice(0, 2) || 'DF').toUpperCase();
+    const cleanFirst = (firstName.replace(/[^a-zA-Z]/g, '').slice(0, 2) || 'EM').toUpperCase();
+    const cleanLast = (lastName.replace(/[^a-zA-Z]/g, '').slice(0, 2) || 'PL').toUpperCase();
+    const year = yearOfJoining || new Date().getFullYear();
+    
+    // Find current max seq
+    if (seqNumber === undefined) {
+      const all = getLocalStore<Employee[]>('employees', DEMO_EMPLOYEES);
+      seqNumber = all.length + 1;
+    }
+    const seqStr = String(seqNumber).padStart(4, '0');
+    return `${cleanCompany}${cleanFirst}${cleanLast}${year}${seqStr}`;
+  }
+
+  async getEmployeeByLoginId(loginId: string): Promise<Employee | null> {
+    const all = await this.getEmployees();
+    const normalized = loginId.trim().toLowerCase();
+    return (
+      all.find(
+        (e) =>
+          (e.loginId && e.loginId.trim().toLowerCase() === normalized) ||
+          e.employeeId.toLowerCase() === normalized
+      ) || null
+    );
+  }
+
+  async getEmployeeByEmailOrLoginId(identifier: string): Promise<Employee | null> {
+    const all = await this.getEmployees();
+    const normalized = identifier.trim().toLowerCase();
+    return (
+      all.find(
+        (e) =>
+          e.email.trim().toLowerCase() === normalized ||
+          (e.loginId && e.loginId.trim().toLowerCase() === normalized) ||
+          e.employeeId.toLowerCase() === normalized
+      ) || null
+    );
+  }
+
+  // Admin resets or edits password, login ID, and role for any employee
+  async updateUserCredentials(
+    employeeId: string,
+    updates: {
+      loginId?: string;
+      password?: string;
+      role?: UserRole;
+      department?: string;
+      designation?: string;
+    },
+    actor?: { id: string; name: string; role: any }
+  ): Promise<{ success: boolean; message: string }> {
+    const emp = await this.getEmployeeById(employeeId);
+    if (!emp) {
+      return { success: false, message: 'Employee record not found.' };
+    }
+
+    const prevLoginId = emp.loginId || emp.employeeId;
+
+    // Check if new login ID is already taken by another employee
+    if (updates.loginId && updates.loginId.trim().toLowerCase() !== (emp.loginId || '').toLowerCase()) {
+      const existing = await this.getEmployeeByLoginId(updates.loginId.trim());
+      if (existing && existing.employeeId !== employeeId) {
+        return { success: false, message: `Login ID "${updates.loginId}" is already assigned to another user.` };
+      }
+    }
+
+    const updatedEmp: Employee = {
+      ...emp,
+      loginId: updates.loginId !== undefined ? updates.loginId.trim() : emp.loginId,
+      password: updates.password !== undefined ? updates.password.trim() : emp.password,
+      department: updates.department || emp.department,
+      designation: updates.designation || emp.designation,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.saveEmployee(updatedEmp);
+
+    // Sync with User table
+    if (updates.role || updates.loginId) {
+      const users = getLocalStore<User[]>('users', DEMO_USERS);
+      const userIdx = users.findIndex(
+        (u) => u.employeeId === employeeId || (emp.uid && u.uid === emp.uid) || u.email.toLowerCase() === emp.email.toLowerCase()
+      );
+
+      if (userIdx >= 0) {
+        users[userIdx] = {
+          ...users[userIdx],
+          loginId: updates.loginId !== undefined ? updates.loginId.trim() : users[userIdx].loginId,
+          role: updates.role || users[userIdx].role,
+          updatedAt: new Date().toISOString(),
+        };
+        try {
+          await setDoc(doc(db, 'users', users[userIdx].uid), users[userIdx]);
+        } catch (e) {
+          console.warn('Firestore user update err:', e);
+        }
+        setLocalStore('users', users);
+      }
+    }
+
+    // Log the change
+    if (actor) {
+      const changes: string[] = [];
+      if (updates.loginId && updates.loginId !== prevLoginId) changes.push(`Login ID -> "${updates.loginId}"`);
+      if (updates.password) changes.push('Password updated/reset');
+      if (updates.role) changes.push(`Role -> ${updates.role}`);
+
+      await this.logAudit({
+        actorUserId: actor.id,
+        actorName: actor.name,
+        actorRole: actor.role,
+        action: 'SECURITY_CREDENTIALS_UPDATED',
+        entityType: 'UserCredentials',
+        entityId: employeeId,
+        newValue: `Updated credentials for ${emp.fullName}: ${changes.join(', ')}`,
+      });
+    }
+
+    // Notify employee of security update
+    if (emp.uid) {
+      await this.addNotification({
+        id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+        recipientUserId: emp.uid,
+        type: 'SECURITY_ALERT',
+        title: 'Account Credentials Updated',
+        message: `Your account credentials (Login ID / Password / Role) were updated by Administrator ${actor?.name || ''}.`,
+        read: false,
+        createdAt: new Date().toISOString(),
+        relatedEntityId: employeeId,
+        relatedEntityType: 'EMPLOYEE',
+      });
+    }
+
+    return {
+      success: true,
+      message: `Successfully updated credentials for ${emp.fullName}.`,
     };
   }
 }

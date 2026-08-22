@@ -5,16 +5,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = 'USD'): string {
+export function formatCurrency(amount: number | null | undefined, currency = 'INR'): string {
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return '₹0.00';
+  }
   try {
-    return new Intl.NumberFormat('en-US', {
+    // If currency is INR or USD (legacy fallback), format in INR
+    const targetCurrency = currency === 'USD' ? 'INR' : currency || 'INR';
+    const locale = targetCurrency === 'INR' ? 'en-IN' : 'en-US';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: currency,
+      currency: targetCurrency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
   } catch {
-    return `$${amount.toFixed(2)}`;
+    const num = Number(amount) || 0;
+    return `₹${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 }
 

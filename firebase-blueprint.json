@@ -1,0 +1,121 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account and authentication record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "loginId": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "emailVerified": { "type": "boolean" }
+      },
+      "required": ["uid", "employeeId", "email", "role"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee profile record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "loginId": { "type": "string" },
+        "password": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "profilePictureUrl": { "type": "string" },
+        "dateOfJoining": { "type": "string" },
+        "company": { "type": "string" },
+        "department": { "type": "string" },
+        "designation": { "type": "string" },
+        "location": { "type": "string" },
+        "employmentStatus": { "type": "string" },
+        "aboutMe": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "fullName", "email", "department", "designation"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Attendance punch clock record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "date": { "type": "string" },
+        "checkInTime": { "type": "string" },
+        "checkOutTime": { "type": "string" },
+        "status": { "type": "string" },
+        "totalHours": { "type": "number" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "date", "status"]
+    },
+    "LeaveRequest": {
+      "title": "LeaveRequest",
+      "description": "Leave application and approval request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "leaveTypeId": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "daysCount": { "type": "number" },
+        "status": { "type": "string" },
+        "reason": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "leaveTypeId", "startDate", "endDate", "daysCount", "status"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Organizational departments and business units",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "description": { "type": "string" },
+        "headOfDepartment": { "type": "string" },
+        "location": { "type": "string" },
+        "budget": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "code"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User account collection"
+    },
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Workforce profiles"
+    },
+    "/departments/{deptId}": {
+      "schema": "Department",
+      "description": "Organizational departments"
+    },
+    "/attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Employee attendance check-in/out records"
+    },
+    "/leaveRequests/{requestId}": {
+      "schema": "LeaveRequest",
+      "description": "Employee leave submissions and approvals"
+    }
+  }
+}

@@ -52,6 +52,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Departments Collection
+    match /departments/{deptId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
     // Attendance Collection
     match /attendance/{attendanceId} {
       allow read: if isAuthenticated() && (resource == null || isEmployeeOwner(resource.data.employeeId) || isHR());

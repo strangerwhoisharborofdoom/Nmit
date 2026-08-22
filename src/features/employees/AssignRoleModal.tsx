@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { dayflowDb } from '../../services/db';
-import { Employee, UserRole } from '../../types';
+import { Employee, UserRole, Department } from '../../types';
 import {
   Shield,
   UserCheck,
@@ -23,15 +23,6 @@ interface AssignRoleModalProps {
   onSuccess: () => void;
 }
 
-const DEPARTMENTS = [
-  'Engineering',
-  'Human Resources',
-  'Finance & Accounts',
-  'Product & Design',
-  'Operations & Sales',
-  'Executive Management',
-];
-
 export const AssignRoleModal: React.FC<AssignRoleModalProps> = ({
   isOpen,
   onClose,
@@ -41,6 +32,7 @@ export const AssignRoleModal: React.FC<AssignRoleModalProps> = ({
   const { currentUser, currentEmployee, role: myRole } = useAuth();
   const { showToast } = useToast();
 
+  const [availableDepartments, setAvailableDepartments] = useState<Department[]>([]);
   const [selectedRole, setSelectedRole] = useState<UserRole>(() => {
     if (!employee) return 'EMPLOYEE';
     if (employee.department.includes('Human')) return 'HR';
@@ -49,6 +41,14 @@ export const AssignRoleModal: React.FC<AssignRoleModalProps> = ({
   const [selectedDept, setSelectedDept] = useState(employee?.department || 'Engineering');
   const [designation, setDesignation] = useState(employee?.designation || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      dayflowDb.getDepartments().then((depts) => {
+        setAvailableDepartments(depts);
+      });
+    }
+  }, [isOpen]);
 
   // Sync state when employee changes
   React.useEffect(() => {
@@ -245,11 +245,21 @@ export const AssignRoleModal: React.FC<AssignRoleModalProps> = ({
                 onChange={(e) => setSelectedDept(e.target.value)}
                 className="w-full pl-10 pr-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 font-medium focus:outline-hidden focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
               >
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
+                {availableDepartments.length > 0 ? (
+                  availableDepartments.map((dept) => (
+                    <option key={dept.id} value={dept.name}>
+                      {dept.name} ({dept.code})
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Human Resources">Human Resources</option>
+                    <option value="Finance & Accounts">Finance & Accounts</option>
+                    <option value="Product & Design">Product & Design</option>
+                    <option value="Operations & Sales">Operations & Sales</option>
+                  </>
+                )}
               </select>
             </div>
           </div>

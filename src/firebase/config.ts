@@ -27,22 +27,13 @@ const databaseId =
     : undefined;
 
 // Suppress transient offline logs in container/iframe environments
-setLogLevel('error');
+setLogLevel('silent');
 
 let firestoreInstance;
 try {
-  firestoreInstance = initializeFirestore(
-    app,
-    {
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager(),
-      }),
-      experimentalForceLongPolling: true,
-    },
-    databaseId
-  );
-} catch {
   firestoreInstance = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
+} catch {
+  firestoreInstance = getFirestore(app);
 }
 
 export const db = firestoreInstance;

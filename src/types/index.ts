@@ -1,9 +1,23 @@
 export type UserRole = 'ADMIN' | 'HR' | 'EMPLOYEE';
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 
+export interface UserCredential {
+  uid: string;
+  loginId: string;
+  email: string;
+  password?: string;
+  role: UserRole;
+  employeeId: string;
+  fullName: string;
+  department: string;
+  designation: string;
+  updatedAt?: string;
+}
+
 export interface User {
   uid: string;
   employeeId: string;
+  loginId?: string;
   email: string;
   role: UserRole;
   status: UserStatus;
@@ -15,10 +29,21 @@ export interface User {
 
 export type EmploymentStatus = 'ACTIVE' | 'ON_LEAVE' | 'PROBATION' | 'TERMINATED';
 
+export interface BankDetails {
+  accountNumber?: string;
+  bankName?: string;
+  ifscCode?: string;
+  panNumber?: string;
+  uanNumber?: string;
+  empCode?: string;
+}
+
 export interface Employee {
   id: string;
   uid: string;
   employeeId: string;
+  loginId?: string;
+  password?: string;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -37,6 +62,12 @@ export interface Employee {
   manager?: string;
   location: string;
   employmentStatus: EmploymentStatus;
+  bankDetails?: BankDetails;
+  aboutMe?: string;
+  jobHighlights?: string;
+  interests?: string;
+  skills?: string[];
+  certifications?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -261,6 +292,8 @@ export type NotificationType =
   | 'REMOVAL_APPROVED'
   | 'REMOVAL_REJECTED'
   | 'ROLE_ASSIGNED'
+  | 'SECURITY_ALERT'
+  | 'CREDENTIAL_UPDATED'
   | 'SYSTEM';
 
 export interface Notification {
@@ -288,6 +321,19 @@ export interface AuditLog {
   newValue?: string | null;
   timestamp: string;
   ipAddress?: string;
+}
+
+export interface Department {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  headOfDepartment?: string; // Employee ID or name
+  location?: string;
+  budget?: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SystemSettings {

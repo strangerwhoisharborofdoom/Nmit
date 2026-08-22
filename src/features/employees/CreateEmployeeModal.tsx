@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { dayflowDb } from '../../services/db';
-import { Employee, User, SalaryProfile } from '../../types';
+import { Employee, User, SalaryProfile, Department } from '../../types';
 import { generateEmployeeId, generateTemporaryPassword } from '../../lib/utils';
 import { X, UserPlus, Sparkles, Lock, Key, Copy, Check } from 'lucide-react';
 
@@ -20,18 +20,30 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   const { currentUser, currentEmployee, role } = useAuth();
   const { showToast } = useToast();
 
+  const [availableDepartments, setAvailableDepartments] = useState<Department[]>([]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [department, setDepartment] = useState('Engineering');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      dayflowDb.getDepartments().then((depts) => {
+        setAvailableDepartments(depts);
+        if (depts.length > 0 && !depts.some((d) => d.name === department)) {
+          setDepartment(depts[0].name);
+        }
+      });
+    }
+  }, [isOpen]);
   const [designation, setDesignation] = useState('');
   const [dateOfJoining, setDateOfJoining] = useState(new Date().toISOString().split('T')[0]);
   const [company, setCompany] = useState('Dayflow Technologies Inc.');
   const [manager, setManager] = useState('Alex Morgan');
   const [location, setLocation] = useState('San Francisco HQ');
   const [userRole, setUserRole] = useState<'EMPLOYEE' | 'HR' | 'ADMIN'>('EMPLOYEE');
-  const [monthlyWage, setMonthlyWage] = useState<number>(9000);
+  const [monthlyWage, setMonthlyWage] = useState<number>(85000);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Generated credentials preview for the admin
@@ -106,9 +118,9 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
       const newSalaryProfile: SalaryProfile = {
         id: `sp-${newEmpId}`,
         employeeId: newEmpId,
-        monthlyWage: Number(monthlyWage) || 9000,
-        yearlyWage: (Number(monthlyWage) || 9000) * 12,
-        currency: settings.defaultCurrency || 'USD',
+        monthlyWage: Number(monthlyWage) || 85000,
+        yearlyWage: (Number(monthlyWage) || 85000) * 12,
+        currency: settings.defaultCurrency || 'INR',
         effectiveFrom: dateOfJoining,
         workingDaysPerWeek: settings.workingDaysPerWeek || 5,
         breakHours: 1,
@@ -290,12 +302,21 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   onChange={(e) => setDepartment(e.target.value)}
                   className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs focus:outline-hidden focus:border-indigo-500"
                 >
-                  <option value="Engineering">Engineering</option>
-                  <option value="Product Operations">Product Operations</option>
-                  <option value="Design">Design</option>
-                  <option value="Human Resources">Human Resources</option>
-                  <option value="Quality Assurance">Quality Assurance</option>
-                  <option value="Sales & Marketing">Sales & Marketing</option>
+                  {availableDepartments.length > 0 ? (
+                    availableDepartments.map((dept) => (
+                      <option key={dept.id} value={dept.name}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Engineering">Engineering</option>
+                      <option value="Human Resources">Human Resources</option>
+                      <option value="Product & Design">Product & Design</option>
+                      <option value="Finance & Accounts">Finance & Accounts</option>
+                      <option value="Operations & Sales">Operations & Sales</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -368,13 +389,13 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Monthly Base Wage ($)
+                  Monthly Base Wage (₹)
                 </label>
                 <input
                   type="number"
                   value={monthlyWage}
                   onChange={(e) => setMonthlyWage(Number(e.target.value))}
-                  placeholder="9000"
+                  placeholder="85000"
                   min="0"
                   className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs focus:outline-hidden focus:border-indigo-500"
                 />

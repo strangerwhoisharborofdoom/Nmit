@@ -350,7 +350,9 @@ export const AdminDashboard: React.FC = () => {
             <span className="text-2xl sm:text-3xl font-black text-slate-900">{totalEmployees}</span>
             <span className="text-xs font-semibold text-emerald-600">Active</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Across 5 departments</p>
+          <p className="text-xs text-slate-400 mt-2">
+            Across {Object.keys(deptCounts).length || 1} active department{Object.keys(deptCounts).length !== 1 ? 's' : ''}
+          </p>
         </div>
 
         {/* Present Today */}
