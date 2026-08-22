@@ -1,167 +1,428 @@
+<div align="center">
+
 # Dayflow HRMS
 
-> A modern Human Resource Management System for employee self-service, HR operations, attendance, leave, payroll, profiles, notifications, and audit workflows.
+### A modern, role-aware Human Resource Management System
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-nmit--delta.vercel.app-111827?style=for-the-badge)](https://nmit-delta.vercel.app)
+**Employee self-service · HR operations · Attendance · Leave · Payroll · Audit**
+
+<br />
+
+<a href="https://nmit-delta.vercel.app"><strong>🚀 Open Live Demo</strong></a>
+&nbsp;&nbsp;•&nbsp;&nbsp;
+<a href="https://github.com/strangerwhoisharborofdoom/Nmit/issues">Report a Bug</a>
+&nbsp;&nbsp;•&nbsp;&nbsp;
+<a href="https://github.com/strangerwhoisharborofdoom/Nmit/issues">Request a Feature</a>
+
+<br /><br />
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-111827?style=for-the-badge)](https://nmit-delta.vercel.app)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8%2B-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev/)
 [![Firebase](https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=111827)](https://firebase.google.com/)
+[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 
-## Overview
+</div>
 
-Dayflow HRMS is a role-aware web application designed to bring common HR workflows into one clean workspace. Employees get a self-service portal for their personal information, attendance, time-off requests, and payroll information, while HR and administrators get dedicated tools for employee management, attendance, leave approvals, payroll, reporting, settings, and audit activity.
+---
 
-The application is built with React and TypeScript, uses React Router for navigation, Firebase/Firestore for persistent data, and keeps a localStorage-backed data layer as a resilient fallback when Firestore is unavailable.
+## 🧭 What is Dayflow?
 
-## Live Application
+**Dayflow HRMS** is a full-stack-ready HR management interface built around a simple idea:
+
+> **Employees should be able to manage everyday HR tasks themselves, while HR teams should have one place to manage the workforce.**
+
+The application separates the experience by role and brings employee records, attendance, leave, payroll, documents, notifications, settings, and audit activity into a single workspace.
+
+It is currently deployed as a working web application and is structured so that the UI, authentication, persistence, seed data, and feature modules can evolve independently.
+
+---
+
+## ✨ Why Dayflow?
+
+Traditional HR systems often bury simple actions behind complicated navigation. Dayflow focuses on the workflows people actually perform repeatedly:
+
+- **Employees** check attendance, view salary information, manage profiles, and request leave.
+- **HR teams** manage people, review attendance, approve time off, and administer payroll.
+- **Administrators** control organizational settings, departments, and audit activity.
+- **Developers** get a modular React + TypeScript codebase with a dedicated data-service layer.
+
+The goal is not to make another spreadsheet with buttons. It is to provide a foundation for a practical, extensible HR operating system.
+
+---
+
+## 🚀 Live Demo
 
 **Production:** https://nmit-delta.vercel.app
 
-## Core Capabilities
+The live application is deployed from the `main` branch.
 
-### Employee self-service
+> **Demo note:** The repository contains seeded demonstration data. Do not use demo accounts, seeded passwords, or sample employee information in a real production environment.
 
-- Employee dashboard
-- Personal profile and employee details
-- Attendance views
-- Time-off / leave requests
-- Leave balances and request history
-- Payslips and salary information
-- Employee documents
+---
+
+## 🎯 Feature Matrix
+
+| Area | Employee | HR | Admin |
+|---|:---:|:---:|:---:|
+| Dashboard | ✅ | ✅ | ✅ |
+| Personal profile | ✅ | ✅ | ✅ |
+| Employee directory | — | ✅ | ✅ |
+| Attendance | 👁️ | 🛠️ | 🛠️ |
+| Leave / time off | 📝 | ✅ | ✅ |
+| Leave approval | — | ✅ | ✅ |
+| Payroll | 👁️ | 🛠️ | 🛠️ |
+| Payslips | ✅ | 🛠️ | 🛠️ |
+| Documents | ✅ | 🛠️ | 🛠️ |
+| Departments | — | 🛠️ | 🛠️ |
+| System settings | — | 🛠️ | 🛠️ |
+| Audit logs | — | 👁️ | 👁️ |
+| Notifications | ✅ | ✅ | ✅ |
+
+**Legend:** `👁️ View` · `📝 Submit` · `🛠️ Manage` · `— Not exposed`
+
+---
+
+# 👤 Employee Experience
+
+Dayflow gives employees a self-service workspace instead of making every small HR action dependent on an HR representative.
+
+### Employee dashboard
+
+- Personal overview
+- Quick access to common HR actions
+- Attendance information
+- Leave status and balances
+- Payroll access
 - Notifications
 
-### HR & administration
+### Profile
 
-- Admin / HR dashboard
-- Employee directory and employee profiles
-- Attendance management
-- Leave request review and approval workflows
-- Payroll management
-- Departments and organizational settings
+- Personal information
+- Employment details
+- Department and designation
+- Contact information
+- Employee documents
+
+### Attendance
+
+Employees can access their attendance information through a dedicated attendance experience while HR/admin users have a separate management workflow.
+
+### Time off
+
+Employees can:
+
+1. Review available leave balances.
+2. Select a leave type.
+3. Submit a request.
+4. Track request status.
+5. Review request history.
+
+HR/admin users receive the corresponding management workflow for reviewing requests.
+
+### Payroll
+
+Employees have access to their salary and payslip experience, while HR/admin users have dedicated payroll administration screens.
+
+---
+
+# 🧑‍💼 HR & Admin Experience
+
+The administrative side of Dayflow is designed around workforce operations rather than just CRUD screens.
+
+### Workforce management
+
+- Employee directory
+- Employee profiles
+- Department management
+- Employee lifecycle workflows
+- Employee removal requests
+
+### Attendance administration
+
+- Workforce attendance visibility
+- Administrative attendance workflows
+- Employee-level attendance access
+
+### Leave management
+
+- Leave request queue
+- Approval/review workflow
+- Leave types
+- Leave balances
+- Request history
+
+### Payroll administration
+
+- Salary profiles
+- Salary components
+- Payroll records
+- Payslip management
+
+### Governance
+
 - System settings
+- Notifications
 - Audit logs
-- Employee removal request workflows
+- Role-aware access
 
-### Authentication & roles
+---
 
-The application supports role-aware routing for:
-
-- `ADMIN`
-- `HR`
-- `EMPLOYEE`
-
-Protected routes redirect unauthenticated users to the login page, while role-restricted routes prevent employees from accessing HR/admin areas.
-
-## Architecture
+# 🧠 Architecture
 
 ```text
-React UI
-   │
-   ├── Authentication
-   │     ├── Firebase Auth
-   │     └── Demo / local session login
-   │
-   ├── Feature Modules
-   │     ├── Dashboard
-   │     ├── Employees & Profiles
-   │     ├── Attendance
-   │     ├── Time Off
-   │     ├── Payroll
-   │     └── Settings & Audit
-   │
-   └── DayflowDbService
-         │
-         ├── Firestore
-         │
-         └── localStorage fallback
+                         ┌──────────────────────┐
+                         │      Dayflow UI      │
+                         │ React + TypeScript   │
+                         └──────────┬───────────┘
+                                    │
+                 ┌──────────────────┼──────────────────┐
+                 │                  │                  │
+                 ▼                  ▼                  ▼
+          ┌────────────┐     ┌─────────────┐    ┌──────────────┐
+          │ Auth Layer │     │ React Router│    │ Feature UI   │
+          │ Firebase + │     │ Role guards │    │ Dashboard    │
+          │ local demo │     │             │    │ HR / Payroll │
+          └──────┬─────┘     └─────────────┘    └──────┬───────┘
+                 │                                     │
+                 └──────────────────┬──────────────────┘
+                                    ▼
+                         ┌──────────────────────┐
+                         │  DayflowDbService    │
+                         │  Single data layer   │
+                         └──────────┬───────────┘
+                                    │
+                         ┌──────────┴──────────┐
+                         ▼                     ▼
+                 ┌──────────────┐      ┌───────────────┐
+                 │  Firestore   │      │ localStorage  │
+                 │   Primary    │      │   Fallback    │
+                 └──────────────┘      └───────────────┘
 ```
 
-The data service initializes local fallback data first, then attempts to connect to Firestore. This lets the interface remain usable even when the remote database cannot be reached.
+### Architectural principle
 
-## Tech Stack
+UI components should not become database clients.
 
-| Layer | Technology |
+Feature screens communicate with the **DayflowDbService**, which owns persistence behavior. This keeps Firestore access, fallback storage, seeding, and data operations in one place.
+
+---
+
+# 🔐 Authentication & Authorization
+
+Dayflow supports three application roles:
+
+```text
+ADMIN
+  │
+  ├── Organization management
+  ├── HR operations
+  ├── Payroll
+  ├── Settings
+  └── Audit
+
+HR
+  │
+  ├── Workforce management
+  ├── Attendance
+  ├── Leave management
+  └── Payroll operations
+
+EMPLOYEE
+  │
+  ├── Dashboard
+  ├── Profile
+  ├── Attendance
+  ├── Time off
+  └── Payroll / payslips
+```
+
+Protected routes redirect unauthenticated users to `/login`, while role-restricted routes prevent unauthorized navigation into HR/admin screens.
+
+**Important:** client-side route protection is a UX/security boundary, not a replacement for backend authorization. Production Firestore rules and server-side authorization must independently enforce permissions.
+
+---
+
+# 💾 Data & Reliability
+
+Dayflow uses **Firebase Firestore** as the primary persistence layer and a **localStorage-backed fallback** for resilience during development and demonstrations.
+
+### Initialization flow
+
+```text
+Application starts
+       │
+       ▼
+Seed local fallback
+       │
+       ▼
+Try Firestore
+   ┌───┴────┐
+   │        │
+ success   failure/timeout
+   │        │
+   ▼        ▼
+Firestore  localStorage
+```
+
+The fallback makes the UI resilient when the remote database cannot be reached. It is **not** a full offline synchronization engine. Production deployments should add explicit conflict resolution, synchronization semantics, and stronger data-integrity guarantees.
+
+---
+
+# 🗂️ Data Domains
+
+The application models the major entities needed by an HR platform:
+
+- `User`
+- `Employee`
+- `Department`
+- `Attendance`
+- `LeaveType`
+- `LeaveBalance`
+- `LeaveRequest`
+- `SalaryProfile`
+- `SalaryComponent`
+- `Payslip / PayrollRecord`
+- `EmployeeDocument`
+- `Notification`
+- `AuditLog`
+- `SystemSettings`
+- `EmployeeRemovalRequest`
+
+Seed data is included for development/demo workflows and can populate corresponding Firestore collections when the remote database is empty.
+
+---
+
+# 🧰 Technology Stack
+
+| Category | Technology |
 |---|---|
-| Frontend | React 19 + TypeScript |
-| Build tool | Vite 6 |
-| Routing | React Router |
-| UI styling | Tailwind CSS |
+| Language | TypeScript |
+| UI | React 19 |
+| Build | Vite 6 |
+| Routing | React Router 7 |
+| Styling | Tailwind CSS 4 |
+| Forms | React Hook Form |
+| Validation | Zod |
 | Icons | Lucide React |
 | Charts | Recharts |
-| Forms | React Hook Form + Zod |
-| Motion | Motion |
+| Animation | Motion |
 | Authentication | Firebase Authentication |
 | Database | Firebase Firestore |
-| Offline / fallback storage | Browser localStorage |
-| AI SDK | Google GenAI SDK |
-| Server utilities | Express + TSX |
+| Local fallback | Browser localStorage |
+| AI integration SDK | Google GenAI SDK |
+| Server utility layer | Express + TSX |
 | Deployment | Vercel |
 
-## Project Structure
+---
+
+# 📁 Project Structure
 
 ```text
 Nmit/
+│
 ├── src/
 │   ├── components/
-│   │   ├── common/          # Shared UI and feedback components
-│   │   └── layout/          # Application shell and navigation
-│   ├── context/             # Authentication and global context
+│   │   ├── common/              # Shared UI primitives and feedback
+│   │   └── layout/              # Navigation and application shell
+│   │
+│   ├── context/
+│   │   └── AuthContext.tsx      # Session, role and authentication state
+│   │
 │   ├── features/
-│   │   ├── attendance/      # Employee + admin attendance
-│   │   ├── auth/            # Login and authentication UI
-│   │   ├── dashboard/       # Employee + admin dashboards
-│   │   ├── employees/       # Employee directory
-│   │   ├── payroll/         # Payroll and payslips
-│   │   ├── profile/         # Employee profiles
-│   │   ├── settings/        # Settings and audit pages
-│   │   └── timeoff/         # Leave and time-off workflows
+│   │   ├── auth/                # Login
+│   │   ├── dashboard/           # Employee + admin dashboards
+│   │   ├── employees/           # Employee directory
+│   │   ├── profile/             # Employee profiles
+│   │   ├── attendance/          # Attendance workflows
+│   │   ├── timeoff/             # Leave workflows
+│   │   ├── payroll/             # Payroll + payslips
+│   │   └── settings/            # Settings + audit
+│   │
 │   ├── services/
-│   │   ├── db.ts            # Firestore + localStorage data service
-│   │   └── seedData.ts      # Initial demo data
-│   ├── firebase/             # Firebase configuration
-│   └── App.tsx              # Routes and protected application shell
+│   │   ├── db.ts                # Firestore + localStorage data service
+│   │   └── seedData.ts           # Demo and initial datasets
+│   │
+│   ├── firebase/
+│   │   └── config.ts            # Firebase client configuration
+│   │
+│   ├── types.ts                 # Shared domain types
+│   ├── App.tsx                  # Routing + protected layouts
+│   └── main.tsx                 # Application entry point
+│
 ├── index.html
 ├── package.json
+├── tsconfig.json
 └── README.md
 ```
 
-## Getting Started
+---
 
-### Prerequisites
+# 🛣️ Application Routes
 
-Make sure you have installed:
+## Employee
 
-- Node.js 18+
-- npm
-- A Firebase project if you want persistent cloud data/authentication
+| Route | Purpose |
+|---|---|
+| `/dashboard` | Employee dashboard |
+| `/profile` | Current employee profile |
+| `/profile/:id` | Employee profile |
+| `/attendance` | Attendance |
+| `/time-off` | Leave / time off |
+| `/payroll` | Payslips and payroll information |
+| `/employee/documents` | Employee documents |
 
-### 1. Clone the repository
+## HR / Admin
+
+| Route | Purpose |
+|---|---|
+| `/admin/dashboard` | Administrative dashboard |
+| `/admin/reports` | Reporting dashboard |
+| `/admin/employees` | Employee directory |
+| `/admin/employees/:id` | Employee profile management |
+| `/admin/attendance` | Attendance administration |
+| `/admin/time-off` | Leave management and approvals |
+| `/admin/payroll` | Payroll administration |
+| `/admin/settings` | System settings |
+| `/admin/audit-logs` | Audit logs |
+
+---
+
+# ⚡ Getting Started
+
+## Prerequisites
+
+- **Node.js 18+**
+- **npm**
+- A Firebase project for persistent cloud authentication/data
+
+## 1. Clone
 
 ```bash
 git clone https://github.com/strangerwhoisharborofdoom/Nmit.git
 cd Nmit
 ```
 
-### 2. Install dependencies
+## 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure Firebase
+## 3. Configure Firebase
 
-Create or configure your Firebase project and add the required client-side configuration used by the application.
+Create/configure your Firebase project and provide the client configuration expected by the project.
 
-Keep secrets and environment-specific values out of source control. Use environment variables for credentials or configuration that should not be committed.
+Keep production credentials and environment-specific secrets outside committed source code.
 
-### 4. Start the development server
+## 4. Start development
 
 ```bash
 npm run dev
 ```
 
-The Vite development server is configured to run on port `3000`.
+The Vite development server is configured for port `3000`.
 
 Open:
 
@@ -169,161 +430,208 @@ Open:
 http://localhost:3000
 ```
 
-### 5. Build for production
+## 5. Type-check
+
+```bash
+npm run lint
+```
+
+## 6. Production build
 
 ```bash
 npm run build
 ```
 
-### 6. Preview the production build
+## 7. Preview production build
 
 ```bash
 npm run preview
 ```
 
-### 7. Type-check the project
+---
+
+# 🧪 Development Quality Gate
+
+Before opening a pull request, run:
 
 ```bash
-npm run lint
-```
-
-## Demo / Seed Data
-
-The project includes seed data for development and demonstration. It contains example users, employees, departments, leave types, leave balances, attendance records, payroll profiles, documents, notifications, audit logs, and removal requests.
-
-The application can use these datasets locally and can seed the corresponding Firestore collections when the remote database is empty.
-
-> **Security note:** Demo credentials and seeded passwords are intended for local/demo use only. Never reuse demo credentials in production.
-
-## Application Routes
-
-### Employee
-
-| Route | Purpose |
-|---|---|
-| `/dashboard` | Employee dashboard |
-| `/profile` | Current employee profile |
-| `/attendance` | Attendance |
-| `/time-off` | Leave / time-off |
-| `/payroll` | Payslips and payroll information |
-| `/employee/documents` | Employee documents |
-
-### HR / Admin
-
-| Route | Purpose |
-|---|---|
-| `/admin/dashboard` | Admin / HR dashboard |
-| `/admin/employees` | Employee directory |
-| `/admin/attendance` | Attendance administration |
-| `/admin/time-off` | Leave management and approval |
-| `/admin/payroll` | Payroll administration |
-| `/admin/settings` | System settings |
-| `/admin/audit-logs` | Audit activity |
-
-## Data Model
-
-Dayflow's data layer is organized around HR entities such as:
-
-- Users and roles
-- Employees
-- Departments
-- Attendance records
-- Leave types
-- Leave balances
-- Leave requests
-- Salary profiles and salary components
-- Payslips / payroll records
-- Employee documents
-- Notifications
-- Audit logs
-- System settings
-- Employee removal requests
-
-## Reliability Model
-
-Dayflow is intentionally designed with a fallback data path:
-
-1. Local seed data is initialized for immediate UI availability.
-2. The app attempts to read/write through Firestore.
-3. When Firestore is unavailable or times out, the service falls back to localStorage-backed data.
-4. When Firestore becomes available, remote data can be used again.
-
-This is useful for development, demos, unstable connections, and offline-friendly workflows. It should not be mistaken for a complete offline synchronization system; production deployments still need careful conflict handling, security rules, and data integrity controls.
-
-## Security Considerations
-
-Before using Dayflow with real employee data, review and harden the following:
-
-- Firebase Authentication configuration
-- Firestore security rules
-- Role enforcement at the database layer
-- Password handling and credential storage
-- Personal and payroll data exposure
-- Audit-log integrity
-- Environment variable management
-- Production error logging
-- Data validation and authorization on every write
-
-The client-side route guards improve UX, but authorization must ultimately be enforced by the backend/database security layer.
-
-## Development Guidelines
-
-### Recommended workflow
-
-```bash
-git checkout -b feature/your-feature
 npm install
 npm run lint
 npm run build
+```
+
+A good contribution should leave the repository in a state where:
+
+- TypeScript passes without errors.
+- The production build succeeds.
+- Existing role boundaries remain intact.
+- Sensitive operations continue to produce appropriate audit records.
+- New persistence logic stays inside the data-service layer.
+
+---
+
+# 🔒 Production Security Checklist
+
+Dayflow contains HR and payroll concepts, so security is not optional.
+
+Before handling real employee data:
+
+- [ ] Configure Firebase Authentication for production.
+- [ ] Write restrictive Firestore security rules.
+- [ ] Enforce role authorization at the database/backend layer.
+- [ ] Remove or disable demo credentials.
+- [ ] Never store plaintext production passwords.
+- [ ] Review personal-data exposure in employee profiles.
+- [ ] Protect payroll and banking information.
+- [ ] Validate all client-provided data server-side.
+- [ ] Restrict administrative writes.
+- [ ] Protect audit-log integrity.
+- [ ] Configure production monitoring and error reporting.
+- [ ] Review environment-variable handling.
+- [ ] Add automated security and regression testing.
+
+> **Never treat frontend route guards as the only authorization mechanism.** A malicious client can bypass UI restrictions.
+
+---
+
+# 🧭 Roadmap
+
+The current foundation can evolve toward a more complete HR platform.
+
+### Platform
+
+- [ ] Strong server-side authorization
+- [ ] Production-grade Firestore security rules
+- [ ] Automated test suite
+- [ ] CI/CD quality gates
+- [ ] Structured application logging
+- [ ] Error monitoring
+
+### Employee experience
+
+- [ ] Attendance clock-in / clock-out
+- [ ] Attendance corrections
+- [ ] Secure document upload
+- [ ] Document expiry reminders
+- [ ] Employee announcements
+- [ ] Rich notification center
+
+### HR operations
+
+- [ ] Advanced employee lifecycle management
+- [ ] Bulk employee import/export
+- [ ] Approval chains
+- [ ] HR analytics
+- [ ] Advanced reporting
+- [ ] CSV/PDF exports
+
+### Payroll
+
+- [ ] Automated payroll calculations
+- [ ] Configurable statutory deductions
+- [ ] Payroll processing periods
+- [ ] Payroll approval workflow
+- [ ] Secure payslip generation
+
+### Intelligence & automation
+
+- [ ] HR workflow automation
+- [ ] Intelligent employee query assistant
+- [ ] Attendance anomaly detection
+- [ ] Payroll anomaly detection
+- [ ] Automated HR reminders
+
+### Reliability
+
+- [ ] Real-time Firestore listeners
+- [ ] True offline synchronization
+- [ ] Conflict resolution
+- [ ] Background retry queues
+
+---
+
+# 🧩 Design Principles
+
+### 1. Role-first UX
+
+The application should answer **“what can I do?”** before exposing unnecessary system complexity.
+
+### 2. Feature isolation
+
+Attendance should not know how payroll works. Payroll should not own authentication. Each domain stays in its feature module.
+
+### 3. Data access through a service layer
+
+Persistence belongs in `DayflowDbService`, not scattered across components.
+
+### 4. Audit sensitive actions
+
+Administrative changes should be traceable.
+
+### 5. Resilient development experience
+
+Local fallback data makes the application easier to develop, demo, and test when the remote database is unavailable.
+
+### 6. Security at the data boundary
+
+UI restrictions are useful, but actual authorization belongs where the data lives.
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+### Workflow
+
+```bash
+git checkout -b feature/your-feature
+
+# Make your changes
+
+npm run lint
+npm run build
+
 git add .
 git commit -m "feat: describe your change"
 git push -u origin feature/your-feature
 ```
 
-### Code conventions
+Then open a pull request with:
 
-- Keep feature-specific logic inside the relevant `src/features/*` module.
-- Reuse shared UI from `src/components/`.
-- Keep persistence logic inside the service layer instead of directly calling Firestore from UI components.
-- Validate user input before writing data.
-- Preserve role-based access boundaries.
-- Add audit logging for sensitive administrative operations.
+- What changed
+- Why it changed
+- How it was tested
+- Screenshots for meaningful UI changes
+- Any security or migration considerations
 
-## Roadmap Ideas
-
-Potential next steps for turning the prototype into a stronger production HRMS include:
-
-- Real-time Firestore listeners for high-value data
-- Stronger Firestore security rules and server-side authorization
-- Secure password/account provisioning
-- Full payroll calculation and statutory compliance support
-- Attendance clock-in/out integration
-- Employee document upload and secure storage
-- Richer analytics and exports
-- Automated notifications and reminders
-- Test coverage for critical HR workflows
-- CI/CD checks for type safety, builds, and regression testing
-- Proper offline synchronization and conflict resolution
-
-## Contributing
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Make your changes.
-4. Run `npm run lint` and `npm run build`.
-5. Open a pull request with a clear description of the change.
-
-Bug reports and improvement ideas are welcome through GitHub Issues.
-
-## License
-
-No license file is currently defined in this repository. Unless a license is added, default copyright restrictions apply to the repository contents.
-
-## Project Links
-
-- **Live app:** https://nmit-delta.vercel.app
-- **Repository:** https://github.com/strangerwhoisharborofdoom/Nmit
+For bugs and feature requests, use GitHub Issues.
 
 ---
 
-Built as a modern HRMS-style application with a focus on practical employee self-service and HR administration workflows.
+# 📜 License
+
+No license file is currently defined in this repository.
+
+Until an explicit open-source license is added, the repository remains subject to default copyright restrictions. If this project is intended to accept external contributions, adding a license should be considered before wider distribution.
+
+---
+
+# 🔗 Links
+
+| Resource | Link |
+|---|---|
+| 🚀 Live application | https://nmit-delta.vercel.app |
+| 💻 GitHub repository | https://github.com/strangerwhoisharborofdoom/Nmit |
+
+---
+
+<div align="center">
+
+### Built with React, TypeScript, Firebase and a lot of coffee. ☕
+
+**Dayflow HRMS**
+
+*Making everyday HR workflows simpler, clearer, and easier to operate.*
+
+</div>
