@@ -1,0 +1,6 @@
+{
+  "name": "Dayflow HRMS",
+  "description": "Enterprise Human Resource Management System for attendance, time-off, employee profiles, and payroll.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getRole() {
+      return isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? getUserData().role
+        : null;
+    }
+
+    function isAdmin() {
+      return getRole() == 'ADMIN';
+    }
+
+    function isHR() {
+      return getRole() == 'HR' || isAdmin();
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isEmployeeOwner(employeeId) {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().employeeId == employeeId) ||
+        isHR()
+      );
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isHR());
+      allow create: if isHR() || isOwner(userId);
+      allow update: if isAuthenticated() && (isOwner(userId) || isHR());
+      allow delete: if isAdmin();
+    }
+
+    // Employees Collection
+    match /employees/{employeeId} {
+      allow read: if isAuthenticated();
+      allow create: if isHR();
+      allow update: if isAuthenticated() && (isEmployeeOwner(employeeId) || isHR());
+      allow delete: if isAdmin();
+    }
+
+    // Attendance Collection
+    match /attendance/{attendanceId} {
+      allow read: if isAuthenticated() && (resource == null || isEmployeeOwner(resource.data.employeeId) || isHR());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (isEmployeeOwner(resource.data.employeeId) || isHR());
+      allow delete: if isHR();
+    }
+
+    // Leave Types Collection
+    match /leaveTypes/{typeId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // Leave Balances Collection
+    match /leaveBalances/{balanceId} {
+      allow read: if isAuthenticated() && (resource == null || isEmployeeOwner(resource.data.employeeId) || isHR());
+      allow create, update: if isAuthenticated();
+      allow delete: if isHR();
+    }
+
+    // Leave Requests Collection
+    match /leaveRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource == null || isEmployeeOwner(resource.data.employeeId) || isHR());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (isEmployeeOwner(resource.data.employeeId) || isHR());
+      allow delete: if isHR();
+    }
+
+    // Salary Profiles Collection
+    match /salaryProfiles/{profileId} {
+      allow read: if isAuthenticated() && (resource == null || isEmployeeOwner(resource.data.employeeId) || isHR());
+      allow write: if isHR();
+    }
+
+    // Salary Components Collection
+    match /salaryComponents/{componentId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // Payroll Records Collection
+    match /payrollRecords/{recordId} {
+      allow read: if isAuthenticated() && (resource == null || isEmployeeOwner(resource.data.employeeId) || isHR());
+      allow write: if isHR();
+    }
+
+    // Employee Documents Collection
+    match /employeeDocuments/{docId} {
+      allow read: if isAuthenticated() && (resource == null || isEmployeeOwner(resource.data.employeeId) || isHR());
+      allow create: if isAuthenticated();
+      allow update, delete: if isHR() || (resource != null && isEmployeeOwner(resource.data.employeeId));
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.recipientUserId == request.auth.uid || isHR());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.recipientUserId == request.auth.uid || isHR());
+      allow delete: if isAuthenticated() && (resource.data.recipientUserId == request.auth.uid || isHR());
+    }
+
+    // Audit Logs Collection
+    match /auditLogs/{logId} {
+      allow read: if isHR();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // immutable audit log
+    }
+
+    // System Settings Collection
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+  }
+}
