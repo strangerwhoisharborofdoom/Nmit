@@ -213,6 +213,41 @@ export interface PayrollRun {
   paidAt?: string;
 }
 
+export type RemovalReason =
+  | 'RESIGNATION'
+  | 'PERFORMANCE'
+  | 'CONTRACT_TERMINATION'
+  | 'RESTRUCTURING'
+  | 'MUTUAL_AGREEMENT'
+  | 'DISCIPLINARY'
+  | 'OTHER';
+
+export type RemovalRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+
+export interface EmployeeRemovalRequest {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeeDepartment: string;
+  employeeDesignation: string;
+  employeeEmail: string;
+  reason: RemovalReason;
+  reasonDetails: string;
+  proposedEffectiveDate: string; // YYYY-MM-DD
+  additionalNotes?: string;
+  status: RemovalRequestStatus;
+  requestedByUid: string;
+  requestedByName: string;
+  requestedByRole: UserRole;
+  requestedAt: string;
+  reviewedByUid?: string;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  reviewComment?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type NotificationType =
   | 'LEAVE_SUBMITTED'
   | 'LEAVE_REQUESTED'
@@ -222,6 +257,10 @@ export type NotificationType =
   | 'SALARY_UPDATED'
   | 'PAYSLIP_GENERATED'
   | 'ATTENDANCE_ALERT'
+  | 'REMOVAL_REQUESTED'
+  | 'REMOVAL_APPROVED'
+  | 'REMOVAL_REJECTED'
+  | 'ROLE_ASSIGNED'
   | 'SYSTEM';
 
 export interface Notification {
@@ -234,7 +273,7 @@ export interface Notification {
   read: boolean;
   createdAt: string;
   relatedEntityId?: string;
-  relatedEntityType?: 'LEAVE' | 'ATTENDANCE' | 'SALARY' | 'EMPLOYEE' | 'PAYROLL';
+  relatedEntityType?: 'LEAVE' | 'ATTENDANCE' | 'SALARY' | 'EMPLOYEE' | 'PAYROLL' | 'REMOVAL';
 }
 
 export interface AuditLog {

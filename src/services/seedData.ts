@@ -12,6 +12,7 @@ import {
   SystemSettings,
   Attendance,
   EmployeeDocument,
+  EmployeeRemovalRequest,
 } from '../types';
 
 export const INITIAL_SETTINGS: SystemSettings = {
@@ -843,6 +844,28 @@ export const DEMO_NOTIFICATIONS: Notification[] = [
   },
 ];
 
+export const DEMO_REMOVAL_REQUESTS: EmployeeRemovalRequest[] = [
+  {
+    id: 'rem-req-1',
+    employeeId: 'DAYFLOW-PP2025-006',
+    employeeName: 'Priya Patel',
+    employeeDepartment: 'Finance & Accounts',
+    employeeDesignation: 'Financial Analyst',
+    employeeEmail: 'priya.patel@demo.dayflow.local',
+    reason: 'RESIGNATION',
+    reasonDetails: 'Submitted voluntary 30-day notice to pursue international postgraduate studies in London.',
+    proposedEffectiveDate: '2026-09-30',
+    additionalNotes: 'Knowledge handover planned with senior accounting team. Clearance forms prepared.',
+    status: 'PENDING',
+    requestedByUid: 'demo-hr-uid',
+    requestedByName: 'Sarah Jenkins',
+    requestedByRole: 'HR',
+    requestedAt: '2026-08-20T11:00:00Z',
+    createdAt: '2026-08-20T11:00:00Z',
+    updatedAt: '2026-08-20T11:00:00Z',
+  },
+];
+
 export const DEMO_AUDIT_LOGS: AuditLog[] = [
   {
     id: 'audit-1',
@@ -879,3 +902,5 @@ export const DEMO_AUDIT_LOGS: AuditLog[] = [
     timestamp: '2026-08-10T14:00:00Z',
   },
 ];
+
+

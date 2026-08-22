@@ -11,6 +11,7 @@ import {
   LeaveRequest,
   SalaryProfile,
   AuditLog,
+  EmployeeRemovalRequest,
 } from '../../types';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import {
@@ -28,7 +29,11 @@ import {
   ShieldAlert,
   ChevronRight,
   Sparkles,
+  UserMinus,
+  Shield,
+  UserCheck,
 } from 'lucide-react';
+import { OffboardingApprovalsModal } from '../employees/OffboardingApprovalsModal';
 import {
   ResponsiveContainer,
   BarChart,
@@ -53,9 +58,11 @@ export const AdminDashboard: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<Attendance[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [removalRequests, setRemovalRequests] = useState<EmployeeRemovalRequest[]>([]);
   const [salaryProfiles, setSalaryProfiles] = useState<SalaryProfile[]>([]);
   const [recentAuditLogs, setRecentAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isApprovalsModalOpen, setIsApprovalsModalOpen] = useState(false);
 
   // Leave approval / reject modal
   const [selectedLeave, setSelectedLeave] = useState<LeaveRequest | null>(null);
@@ -67,16 +74,18 @@ export const AdminDashboard: React.FC = () => {
 
   const loadData = async () => {
     setIsLoading(true);
-    const [empList, attList, leaveList, logs] = await Promise.all([
+    const [empList, attList, leaveList, remList, logs] = await Promise.all([
       dayflowDb.getEmployees(),
       dayflowDb.getAttendance(undefined, todayStr.substring(0, 7)),
       dayflowDb.getLeaveRequests(),
+      dayflowDb.getRemovalRequests(),
       dayflowDb.getAuditLogs(),
     ]);
 
     setEmployees(empList);
     setAttendanceRecords(attList);
     setLeaveRequests(leaveList);
+    setRemovalRequests(remList);
     setRecentAuditLogs(logs.slice(0, 5));
     setIsLoading(false);
   };
@@ -121,11 +130,15 @@ export const AdminDashboard: React.FC = () => {
 
   const handleApproveLeave = async (req: LeaveRequest) => {
     setIsProcessing(true);
+    const reviewerTitle = currentEmployee?.fullName
+      ? `${currentEmployee.fullName} (${role === 'HR' ? 'HR Officer' : 'Admin'})`
+      : role === 'HR' ? 'HR Officer' : 'Administrator';
+
     const updated: LeaveRequest = {
       ...req,
       status: 'APPROVED',
       reviewedBy: currentUser?.uid,
-      reviewedByName: currentEmployee?.fullName || 'HR Admin',
+      reviewedByName: reviewerTitle,
       reviewedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -151,7 +164,7 @@ export const AdminDashboard: React.FC = () => {
       recipientUserId: req.employeeId,
       type: 'LEAVE_APPROVED',
       title: 'Time Off Approved',
-      message: `Your request for ${req.leaveTypeName} (${req.numberOfDays} days) has been approved.`,
+      message: `Your request for ${req.leaveTypeName} (${req.numberOfDays} days) has been approved by ${reviewerTitle}.`,
       read: false,
       createdAt: new Date().toISOString(),
       relatedEntityId: req.id,
@@ -160,8 +173,8 @@ export const AdminDashboard: React.FC = () => {
 
     await dayflowDb.logAudit({
       actorUserId: currentUser?.uid || 'admin',
-      actorName: currentEmployee?.fullName || 'HR Admin',
-      actorRole: role || 'ADMIN',
+      actorName: currentEmployee?.fullName || (role === 'HR' ? 'HR Officer' : 'Admin'),
+      actorRole: role || 'HR',
       action: 'LEAVE_APPROVED',
       entityType: 'LeaveRequest',
       entityId: req.id,
@@ -184,11 +197,15 @@ export const AdminDashboard: React.FC = () => {
     }
 
     setIsProcessing(true);
+    const reviewerTitle = currentEmployee?.fullName
+      ? `${currentEmployee.fullName} (${role === 'HR' ? 'HR Officer' : 'Admin'})`
+      : role === 'HR' ? 'HR Officer' : 'Administrator';
+
     const updated: LeaveRequest = {
       ...selectedLeave,
       status: 'REJECTED',
       reviewedBy: currentUser?.uid,
-      reviewedByName: currentEmployee?.fullName || 'HR Admin',
+      reviewedByName: reviewerTitle,
       reviewedAt: new Date().toISOString(),
       reviewComment: rejectComment,
       updatedAt: new Date().toISOString(),
@@ -252,7 +269,20 @@ export const AdminDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsApprovalsModalOpen(true)}
+            className="px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all flex items-center gap-2 relative"
+          >
+            <UserMinus className="w-4 h-4 text-rose-600" />
+            <span>Offboarding Approvals</span>
+            {removalRequests.filter((r) => r.status === 'PENDING').length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+                {removalRequests.filter((r) => r.status === 'PENDING').length}
+              </span>
+            )}
+          </button>
           <button
             type="button"
             onClick={() => navigate('/admin/employees')}
@@ -271,6 +301,38 @@ export const AdminDashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Pending Offboarding Approvals Banner (Admin / HR) */}
+      {removalRequests.filter((r) => r.status === 'PENDING').length > 0 && (
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+              <UserMinus className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-rose-900 text-sm">
+                  Employee Offboarding Approval Requests Pending
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-800 text-[11px] font-black">
+                  {removalRequests.filter((r) => r.status === 'PENDING').length} Pending
+                </span>
+              </div>
+              <p className="text-xs text-rose-700/80 mt-0.5">
+                HR officers have submitted separation requests requiring Administrator review, sign-off, and termination authorization.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsApprovalsModalOpen(true)}
+            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl text-xs font-bold shadow-xs transition-all shrink-0 flex items-center gap-1.5"
+          >
+            <span>Review & Authorize</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -579,6 +641,15 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Offboarding Approvals Modal */}
+      <OffboardingApprovalsModal
+        isOpen={isApprovalsModalOpen}
+        onClose={() => setIsApprovalsModalOpen(false)}
+        onSuccess={() => {
+          loadData();
+        }}
+      />
     </div>
   );
 };

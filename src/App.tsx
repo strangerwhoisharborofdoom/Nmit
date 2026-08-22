@@ -112,6 +112,14 @@ export function App() {
               }
             />
             <Route
+              path="/employee/dashboard"
+              element={
+                <ProtectedLayout>
+                  <EmployeeDashboard />
+                </ProtectedLayout>
+              }
+            />
+            <Route
               path="/profile"
               element={
                 <ProtectedLayout>
@@ -128,7 +136,39 @@ export function App() {
               }
             />
             <Route
+              path="/employee/profile"
+              element={
+                <ProtectedLayout>
+                  <EmployeeProfile />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/employee/profile/:id"
+              element={
+                <ProtectedLayout>
+                  <EmployeeProfile />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/employee/documents"
+              element={
+                <ProtectedLayout>
+                  <EmployeeProfile />
+                </ProtectedLayout>
+              }
+            />
+            <Route
               path="/attendance"
+              element={
+                <ProtectedLayout>
+                  <EmployeeAttendance />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/employee/attendance"
               element={
                 <ProtectedLayout>
                   <EmployeeAttendance />
@@ -144,7 +184,31 @@ export function App() {
               }
             />
             <Route
+              path="/employee/time-off"
+              element={
+                <ProtectedLayout>
+                  <EmployeeTimeOff />
+                </ProtectedLayout>
+              }
+            />
+            <Route
               path="/payroll"
+              element={
+                <ProtectedLayout>
+                  <EmployeePayslips />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/employee/payroll"
+              element={
+                <ProtectedLayout>
+                  <EmployeePayslips />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/employee/salary"
               element={
                 <ProtectedLayout>
                   <EmployeePayslips />
@@ -155,6 +219,14 @@ export function App() {
             {/* Admin / HR Routes */}
             <Route
               path="/admin/dashboard"
+              element={
+                <ProtectedLayout allowedRoles={['ADMIN', 'HR']}>
+                  <AdminDashboard />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/admin/reports"
               element={
                 <ProtectedLayout allowedRoles={['ADMIN', 'HR']}>
                   <AdminDashboard />
@@ -204,7 +276,15 @@ export function App() {
             <Route
               path="/admin/settings"
               element={
-                <ProtectedLayout allowedRoles={['ADMIN']}>
+                <ProtectedLayout allowedRoles={['ADMIN', 'HR']}>
+                  <SettingsAndAudit />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/admin/audit-logs"
+              element={
+                <ProtectedLayout allowedRoles={['ADMIN', 'HR']}>
                   <SettingsAndAudit />
                 </ProtectedLayout>
               }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -17,17 +18,21 @@ import {
   Trash2,
   CalendarCheck,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 
 export const EmployeeTimeOff: React.FC = () => {
-  const { currentEmployee } = useAuth();
+  const { currentEmployee, role } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [leaveToCancel, setLeaveToCancel] = useState<LeaveRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const isAdminOrHR = role === 'ADMIN' || role === 'HR';
 
   const fetchLeaveData = async () => {
     if (!currentEmployee) return;
@@ -84,14 +89,27 @@ export const EmployeeTimeOff: React.FC = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsApplyModalOpen(true)}
-          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Request Time Off</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {isAdminOrHR && (
+            <button
+              type="button"
+              onClick={() => navigate('/admin/time-off')}
+              className="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <Shield className="w-4 h-4 text-indigo-600" />
+              <span>HR Leave Approvals Portal</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsApplyModalOpen(true)}
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Request Time Off</span>
+          </button>
+        </div>
       </div>
 
       {/* Leave Balance Cards Grid */}

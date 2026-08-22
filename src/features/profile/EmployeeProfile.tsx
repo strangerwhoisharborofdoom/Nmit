@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -32,15 +32,22 @@ import {
   CheckCircle2,
   ArrowLeft,
   Key,
+  UserMinus,
+  UserCheck,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { RequestRemovalModal } from '../employees/RequestRemovalModal';
+import { AssignRoleModal } from '../employees/AssignRoleModal';
 
 export const EmployeeProfile: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const { currentUser, currentEmployee, role, resetPassword, updateCurrentEmployeeProfile } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
 
+  const isAdmin = role === 'ADMIN';
   const isAdminOrHR = role === 'ADMIN' || role === 'HR';
   const targetEmployeeId = id || currentEmployee?.employeeId || 'DAYFLOW-DC2024-003';
 
@@ -49,6 +56,19 @@ export const EmployeeProfile: React.FC = () => {
   const [salaryComponents, setSalaryComponents] = useState<SalaryComponent[]>([]);
   const [documents, setDocuments] = useState<EmployeeDocument[]>([]);
   const [activeTab, setActiveTab] = useState<'resume' | 'private' | 'salary' | 'security'>('resume');
+
+  // Offboarding & Role modals
+  const [isRemovalModalOpen, setIsRemovalModalOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'salary' || tabParam === 'private' || tabParam === 'resume' || tabParam === 'security') {
+      setActiveTab(tabParam);
+    } else if (tabParam === 'documents' || location.pathname.includes('documents')) {
+      setActiveTab('resume');
+    }
+  }, [searchParams, location.pathname]);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -242,7 +262,31 @@ export const EmployeeProfile: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {isAdminOrHR && employee.employmentStatus !== 'TERMINATED' && (
+              <>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setIsRoleModalOpen(true)}
+                    className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                  >
+                    <UserCheck className="w-4 h-4 text-indigo-600" />
+                    <span>Assign Role & Dept</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setIsRemovalModalOpen(true)}
+                  className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <UserMinus className="w-4 h-4 text-rose-600" />
+                  <span>{isAdmin ? 'Offboard / Terminate' : 'Request Offboarding'}</span>
+                </button>
+              </>
+            )}
+
             {!isEditing ? (
               <button
                 type="button"
@@ -698,38 +742,80 @@ export const EmployeeProfile: React.FC = () => {
       {activeTab === 'security' && (
         <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
           <h3 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
-            Account Security & Credentials
+            Account Security & Access Authority
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
-            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60">
-              <p className="font-bold text-slate-900 text-sm mb-1">Password & Authentication</p>
-              <p className="text-slate-500 mb-4">
-                Trigger a secure password reset link to the employee's registered email address.
-              </p>
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 flex flex-col justify-between">
+              <div>
+                <p className="font-bold text-slate-900 text-sm mb-1">Password & Authentication</p>
+                <p className="text-slate-500 mb-4">
+                  Trigger a secure password reset link to the employee's registered email address.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={handleSendPasswordReset}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-colors"
+                className="w-fit px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-colors"
               >
                 <Key className="w-3.5 h-3.5" />
                 <span>Send Password Reset Email</span>
               </button>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60">
-              <p className="font-bold text-slate-900 text-sm mb-1">Role-Based Access Level</p>
-              <p className="text-slate-500 mb-4">
-                Assigned system authority determines feature permissions and authorization boundaries.
-              </p>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 font-bold">
-                <Shield className="w-4 h-4" />
-                <span>Active Role: {employee.department.includes('Human') ? 'HR / ADMIN' : 'EMPLOYEE'}</span>
+            <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 flex flex-col justify-between">
+              <div>
+                <p className="font-bold text-slate-900 text-sm mb-1">Role-Based Access Level</p>
+                <p className="text-slate-500 mb-3">
+                  Assigned system authority determines feature permissions and authorization boundaries.
+                </p>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 font-bold mb-3">
+                  <Shield className="w-4 h-4" />
+                  <span>
+                    Authority:{' '}
+                    {employee.department.includes('Human')
+                      ? 'HR OFFICER'
+                      : employee.department.includes('Executive')
+                      ? 'ADMINISTRATOR'
+                      : 'EMPLOYEE'}
+                  </span>
+                </div>
               </div>
+
+              {isAdmin && employee.employmentStatus !== 'TERMINATED' && (
+                <button
+                  type="button"
+                  onClick={() => setIsRoleModalOpen(true)}
+                  className="w-fit px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Assign System Role & HR</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Offboarding / Removal Modal */}
+      <RequestRemovalModal
+        isOpen={isRemovalModalOpen}
+        onClose={() => setIsRemovalModalOpen(false)}
+        employee={employee}
+        onSuccess={() => {
+          fetchProfileData();
+        }}
+      />
+
+      {/* Assign Role Modal */}
+      <AssignRoleModal
+        isOpen={isRoleModalOpen}
+        onClose={() => setIsRoleModalOpen(false)}
+        employee={employee}
+        onSuccess={() => {
+          fetchProfileData();
+        }}
+      />
 
       {/* Document Upload Modal */}
       {isDocModalOpen && (

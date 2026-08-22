@@ -26,6 +26,8 @@ import {
   Notification,
   AuditLog,
   SystemSettings,
+  EmployeeRemovalRequest,
+  UserRole,
 } from '../types';
 import {
   INITIAL_SETTINGS,
@@ -40,6 +42,7 @@ import {
   DEMO_DOCUMENTS,
   DEMO_NOTIFICATIONS,
   DEMO_AUDIT_LOGS,
+  DEMO_REMOVAL_REQUESTS,
 } from './seedData';
 
 // Storage cache keys for instant offline/fallback resilience
@@ -68,17 +71,26 @@ export class DayflowDbService {
   async initializeDb(): Promise<void> {
     if (this.initialized) return;
 
+    // Always seed local fallback immediately so user interface is instant
+    this.seedLocalFallback();
+
     try {
-      // Check if firestore has employees
-      const empSnap = await getDocs(collection(db, 'employees'));
-      if (empSnap.empty) {
+      // Check if firestore has employees with a safe timeout
+      const fetchWithTimeout = Promise.race([
+        getDocs(collection(db, 'employees')),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 2500)
+        ),
+      ]);
+
+      const empSnap = await fetchWithTimeout;
+      if (empSnap && empSnap.empty) {
         console.log('Seeding initial Firestore database with demo datasets...');
         await this.seedAllData();
       }
       this.initialized = true;
     } catch (err) {
-      console.warn('Firestore initial check encountered warning/offline, initializing local memory store:', err);
-      this.seedLocalFallback();
+      // Seamless offline operation mode
       this.initialized = true;
     }
   }
@@ -97,6 +109,7 @@ export class DayflowDbService {
       setLocalStore('documents', DEMO_DOCUMENTS);
       setLocalStore('notifications', DEMO_NOTIFICATIONS);
       setLocalStore('auditLogs', DEMO_AUDIT_LOGS);
+      setLocalStore('removalRequests', DEMO_REMOVAL_REQUESTS);
     }
   }
 
@@ -160,6 +173,11 @@ export class DayflowDbService {
       for (const log of DEMO_AUDIT_LOGS) {
         await setDoc(doc(db, 'auditLogs', log.id), log);
       }
+
+      // Seed Removal Requests
+      for (const req of DEMO_REMOVAL_REQUESTS) {
+        await setDoc(doc(db, 'removalRequests', req.id), req);
+      }
     } catch (err) {
       console.warn('Firestore seeding error (running in local mode):', err);
     }
@@ -179,6 +197,7 @@ export class DayflowDbService {
     localStorage.removeItem(STORAGE_PREFIX + 'notifications');
     localStorage.removeItem(STORAGE_PREFIX + 'auditLogs');
     localStorage.removeItem(STORAGE_PREFIX + 'payslips');
+    localStorage.removeItem(STORAGE_PREFIX + 'removalRequests');
     await this.seedAllData();
   }
 
@@ -703,6 +722,214 @@ export class DayflowDbService {
     const all = getLocalStore<AuditLog[]>('auditLogs', DEMO_AUDIT_LOGS);
     all.unshift(fullLog);
     setLocalStore('auditLogs', all);
+  }
+
+  // --- EMPLOYEE REMOVAL & OFFBOARDING REQUESTS ---
+  async getRemovalRequests(): Promise<EmployeeRemovalRequest[]> {
+    try {
+      const snap = await getDocs(collection(db, 'removalRequests'));
+      if (!snap.empty) {
+        const list = snap.docs.map((d) => d.data() as EmployeeRemovalRequest);
+        setLocalStore('removalRequests', list);
+        return list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      }
+    } catch (err) {
+      console.warn('Firestore getRemovalRequests err:', err);
+    }
+    return getLocalStore<EmployeeRemovalRequest[]>('removalRequests', DEMO_REMOVAL_REQUESTS).sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt)
+    );
+  }
+
+  async saveRemovalRequest(req: EmployeeRemovalRequest): Promise<void> {
+    try {
+      await setDoc(doc(db, 'removalRequests', req.id), req);
+    } catch (err) {
+      console.warn('Firestore saveRemovalRequest err:', err);
+    }
+    const all = getLocalStore<EmployeeRemovalRequest[]>('removalRequests', DEMO_REMOVAL_REQUESTS);
+    const idx = all.findIndex((r) => r.id === req.id);
+    if (idx >= 0) all[idx] = req;
+    else all.unshift(req);
+    setLocalStore('removalRequests', all);
+  }
+
+  async deleteRemovalRequest(id: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, 'removalRequests', id));
+    } catch (err) {
+      console.warn('Firestore deleteRemovalRequest err:', err);
+    }
+    let all = getLocalStore<EmployeeRemovalRequest[]>('removalRequests', DEMO_REMOVAL_REQUESTS);
+    all = all.filter((r) => r.id !== id);
+    setLocalStore('removalRequests', all);
+  }
+
+  // Terminate employee (soft delete / status update to TERMINATED)
+  async terminateEmployee(
+    employeeId: string,
+    reason?: string,
+    actor?: { id: string; name: string; role: any }
+  ): Promise<void> {
+    const emp = await this.getEmployeeById(employeeId);
+    if (emp) {
+      const updated: Employee = {
+        ...emp,
+        employmentStatus: 'TERMINATED',
+        updatedAt: new Date().toISOString(),
+      };
+      await this.saveEmployee(updated, actor);
+
+      // Deactivate associated user account
+      const users = getLocalStore<User[]>('users', DEMO_USERS);
+      const userIdx = users.findIndex(
+        (u) => u.employeeId === employeeId || (emp.uid && u.uid === emp.uid) || u.email === emp.email
+      );
+      if (userIdx >= 0) {
+        users[userIdx] = { ...users[userIdx], status: 'INACTIVE', updatedAt: new Date().toISOString() };
+        try {
+          await setDoc(doc(db, 'users', users[userIdx].uid), users[userIdx]);
+        } catch (e) {
+          console.warn('User status update error:', e);
+        }
+        setLocalStore('users', users);
+      }
+
+      if (actor) {
+        await this.logAudit({
+          actorUserId: actor.id,
+          actorName: actor.name,
+          actorRole: actor.role,
+          action: 'EMPLOYEE_TERMINATED',
+          entityType: 'Employee',
+          entityId: employeeId,
+          newValue: `Terminated ${emp.fullName}. Reason: ${reason || 'Admin termination'}`,
+        });
+      }
+    }
+  }
+
+  // Hard delete employee (if completely purged)
+  async deleteEmployee(employeeId: string, actor?: { id: string; name: string; role: any }): Promise<void> {
+    const emp = await this.getEmployeeById(employeeId);
+    try {
+      await deleteDoc(doc(db, 'employees', employeeId));
+    } catch (err) {
+      console.warn('Firestore deleteEmployee err:', err);
+    }
+    let all = getLocalStore<Employee[]>('employees', DEMO_EMPLOYEES);
+    all = all.filter((e) => e.employeeId !== employeeId && e.id !== employeeId);
+    setLocalStore('employees', all);
+
+    if (actor && emp) {
+      await this.logAudit({
+        actorUserId: actor.id,
+        actorName: actor.name,
+        actorRole: actor.role,
+        action: 'EMPLOYEE_DELETED',
+        entityType: 'Employee',
+        entityId: employeeId,
+        previousValue: `${emp.fullName} (${emp.department})`,
+      });
+    }
+  }
+
+  // Admin freely assigns / transfers employee and HR roles
+  async assignUserRole(
+    employeeId: string,
+    newRole: UserRole,
+    department?: string,
+    designation?: string,
+    actor?: { id: string; name: string; role: any }
+  ): Promise<{ success: boolean; message: string }> {
+    const emp = await this.getEmployeeById(employeeId);
+    if (!emp) {
+      return { success: false, message: 'Employee record not found.' };
+    }
+
+    const previousRole = emp.department.includes('Human') ? 'HR' : 'EMPLOYEE';
+
+    // Update Employee record
+    const updatedEmp: Employee = {
+      ...emp,
+      department: department || emp.department,
+      designation: designation || emp.designation,
+      updatedAt: new Date().toISOString(),
+    };
+    await this.saveEmployee(updatedEmp);
+
+    // Update User account
+    const users = getLocalStore<User[]>('users', DEMO_USERS);
+    const userIdx = users.findIndex(
+      (u) => u.employeeId === employeeId || (emp.uid && u.uid === emp.uid) || u.email.toLowerCase() === emp.email.toLowerCase()
+    );
+
+    let targetUid = emp.uid || `user-${employeeId}`;
+
+    if (userIdx >= 0) {
+      users[userIdx] = {
+        ...users[userIdx],
+        role: newRole,
+        updatedAt: new Date().toISOString(),
+      };
+      targetUid = users[userIdx].uid;
+      try {
+        await setDoc(doc(db, 'users', users[userIdx].uid), users[userIdx]);
+      } catch (e) {
+        console.warn('User update error:', e);
+      }
+      setLocalStore('users', users);
+    } else {
+      // Create new user profile mapping for this employee
+      const newUser: User = {
+        uid: targetUid,
+        employeeId: emp.employeeId,
+        email: emp.email,
+        role: newRole,
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        emailVerified: true,
+      };
+      users.push(newUser);
+      try {
+        await setDoc(doc(db, 'users', newUser.uid), newUser);
+      } catch (e) {
+        console.warn('New user creation error:', e);
+      }
+      setLocalStore('users', users);
+    }
+
+    // Dispatch notification to the employee
+    await this.addNotification({
+      id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+      recipientUserId: targetUid,
+      type: 'ROLE_ASSIGNED',
+      title: 'Role & Access Updated',
+      message: `Your system access level has been configured as ${newRole} by Administrator ${actor?.name || ''}.`,
+      read: false,
+      createdAt: new Date().toISOString(),
+      relatedEntityId: employeeId,
+      relatedEntityType: 'EMPLOYEE',
+    });
+
+    if (actor) {
+      await this.logAudit({
+        actorUserId: actor.id,
+        actorName: actor.name,
+        actorRole: actor.role,
+        action: 'ROLE_ASSIGNED',
+        entityType: 'UserRole',
+        entityId: employeeId,
+        previousValue: `Role: ${previousRole}`,
+        newValue: `Assigned Role: ${newRole} | Dept: ${updatedEmp.department} | Title: ${updatedEmp.designation}`,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Successfully assigned ${emp.fullName} to ${newRole} (${updatedEmp.department})`,
+    };
   }
 }
 

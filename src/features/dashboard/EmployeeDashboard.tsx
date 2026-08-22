@@ -7,6 +7,7 @@ import { dayflowDb } from '../../services/db';
 import { Attendance, LeaveBalance, LeaveRequest, Notification } from '../../types';
 import { calculateAttendanceHours } from '../../services/attendanceEngine';
 import { formatDate, formatTime, formatCurrency } from '../../lib/utils';
+import { ApplyLeaveModal } from '../timeoff/ApplyLeaveModal';
 import {
   Clock,
   LogIn,
@@ -20,6 +21,7 @@ import {
   ArrowRight,
   Sparkles,
   TrendingUp,
+  Plus,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -34,6 +36,7 @@ export const EmployeeDashboard: React.FC = () => {
   const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isPunching, setIsPunching] = useState(false);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
 
   const todayDateStr = new Date().toISOString().split('T')[0];
 
@@ -301,7 +304,7 @@ export const EmployeeDashboard: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => navigate('/employee/time-off')}
+                onClick={() => setIsApplyModalOpen(true)}
                 className="p-3.5 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 transition-all text-left group"
               >
                 <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
@@ -470,6 +473,16 @@ export const EmployeeDashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Apply Leave Modal */}
+      <ApplyLeaveModal
+        isOpen={isApplyModalOpen}
+        onClose={() => setIsApplyModalOpen(false)}
+        onSuccess={() => {
+          loadDashboardData();
+          showToast('Leave request submitted and updated in dashboard', 'success');
+        }}
+      />
     </div>
   );
 };
